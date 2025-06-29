@@ -139,7 +139,34 @@
       "difficulty": 3
     }
   ],
-  "NP-Complete_3": [],
+  "NP-Complete_3": [
+    {
+      "question": "Which of the following best describes the significance of NP-Complete problems?",
+      "options": [
+        "NP-Complete problems are the hardest problems in the NP complexity class, and no known polynomial-time algorithms exist to solve them. If any NP-Complete problem could be solved efficiently, it would imply that P=NP, a major open question in computer science.",
+        "NP-Complete problems are a subset of NP problems that are guaranteed to have polynomial-time solutions, making them relatively easy to solve in practice.",
+        "NP-Complete problems are a complexity class that is less difficult than NP, and can be solved efficiently using heuristic algorithms.",
+        "NP-Complete problems are a collection of problems that are equivalent in difficulty to the Traveling Salesman problem, which is known to be solvable in polynomial time."
+      ],
+      "correct_answer": "NP-Complete problems are the hardest problems in the NP complexity class, and no known polynomial-time algorithms exist to solve them. If any NP-Complete problem could be solved efficiently, it would imply that P=NP, a major open question in computer science.",
+      "explanation": "NP-Complete problems are the most difficult problems in the NP complexity class, meaning that they are at least as hard as any other problem in NP. No known polynomial-time algorithms exist to solve NP-Complete problems, and it is a major open question in computer science whether such algorithms can even be found (the P vs NP problem). If any NP-Complete problem could be solved efficiently, it would imply that P=NP, which would have profound implications for the field of computational complexity. The other options are incorrect - NP-Complete problems are not a subset of easy problems, nor are they a less difficult complexity class, and the Traveling Salesman problem is itself an NP-Complete problem, not a class of equivalent problems.",
+      "complexity_class": "NP-Complete",
+      "difficulty": 3
+    },
+    {
+      "question": "Which of the following best describes the significance of NP-Complete problems in computational complexity theory?",
+      "options": [
+        "NP-Complete problems are the hardest problems in the NP complexity class, and no known polynomial-time algorithms exist to solve them. If any NP-Complete problem could be solved efficiently, it would imply that P=NP, a major open question in computer science.",
+        "NP-Complete problems are a specific set of problems that can be solved in polynomial time, and are therefore less computationally complex than NP-Hard problems.",
+        "NP-Complete problems are a subset of NP-Hard problems, and can be efficiently reduced to one another, but there are no known polynomial-time algorithms to solve them.",
+        "NP-Complete problems are a class of decision problems that can be verified in polynomial time, but cannot be solved in polynomial time unless P=NP."
+      ],
+      "correct_answer": "NP-Complete problems are the hardest problems in the NP complexity class, and no known polynomial-time algorithms exist to solve them. If any NP-Complete problem could be solved efficiently, it would imply that P=NP, a major open question in computer science.",
+      "explanation": "The key points about NP-Complete problems are:1. They are the hardest problems in the NP complexity class, meaning they are the most computationally complex problems that can still be verified in polynomial time.2. No known polynomial-time algorithms exist to solve NP-Complete problems. This is a major open question in computer science - if any NP-Complete problem could be solved efficiently, it would imply that P=NP, which would have profound implications.3. NP-Complete problems can be efficiently reduced to one another, meaning if you could solve one NP-Complete problem in polynomial time, you could solve all of them in polynomial time.4. NP-Complete problems are distinct from NP-Hard problems, which are even more computationally complex and cannot be solved in polynomial time even with a polynomial-time verification algorithm.The other options are either inaccurate or do not fully capture the significance of NP-Complete problems within computational complexity theory.",
+      "complexity_class": "NP-Complete",
+      "difficulty": 3
+    }
+  ],
   "NP-Hard_3": [
     {
       "question": "Which of the following best describes the practical significance of NP-Hard problems?",
@@ -153,6 +180,47 @@
       "explanation": "The key points about NP-Hard problems are:1. They are at least as hard as NP-complete problems, meaning they are at least as computationally challenging.2. They may not even be in the NP complexity class, which means they could be undecidable problems that cannot be efficiently verified.3. NP-Hard problems represent some of the most fundamental computational challenges, and finding efficient algorithms to solve them would have significant implications across computer science.The other options are either incorrect or do not fully capture the practical significance of NP-Hard problems. Option B is wrong because NP-Hard problems are not necessarily easier than NP-complete problems. Option C is too narrow, as NP-Hard problems are not limited to just optimization problems. Option D is incorrect, as NP-Hard problems are not known to be efficiently solvable in practice using heuristics.",
       "complexity_class": "NP-Hard",
       "difficulty": 3
+    }
+  ],
+  "NP-Complete_4": [
+    {
+      "question": "Which of the following statements about NP-Complete problems is most accurate?",
+      "options": [
+        "NP-Complete problems are the hardest problems in NP, and if any NP-Complete problem has a polynomial-time solution, then P=NP.",
+        "NP-Complete problems are a subset of NP problems that can be solved in polynomial time.",
+        "NP-Complete problems are a proper subset of NP-Hard problems, which are the hardest problems in NP.",
+        "NP-Complete problems can be solved in polynomial time using a non-deterministic Turing machine."
+      ],
+      "correct_answer": "NP-Complete problems are the hardest problems in NP, and if any NP-Complete problem has a polynomial-time solution, then P=NP.",
+      "explanation": "The statement that NP-Complete problems are the hardest problems in NP, and that if any NP-Complete problem has a polynomial-time solution, then P=NP, is the most accurate of the given options.NP-Complete problems are a specific class of NP problems that are considered the most difficult problems in NP. By definition, every NP problem can be reduced to any NP-Complete problem in polynomial time. This means that if any NP-Complete problem could be solved in polynomial time, then all NP problems could also be solved in polynomial time, implying that P=NP.The other options are either inaccurate or incomplete:- NP-Complete problems are not a subset of NP problems that can be solved in polynomial time. In fact, the opposite is true - no known polynomial-time algorithms exist for NP-Complete problems.- NP-Complete problems are not a proper subset of NP-Hard problems. NP-Hard problems are at least as hard as NP-Complete problems, but may not necessarily be in NP.- NP-Complete problems cannot be solved in polynomial time using a non-deterministic Turing machine. The defining characteristic of NP-Complete problems is that they are the hardest problems in NP, which means they cannot be solved in polynomial time even with a non-deterministic Turing machine.",
+      "complexity_class": "NP-Complete",
+      "difficulty": 4
+    },
+    {
+      "question": "Which of the following statements best characterizes the significance and properties of NP-Complete problems?",
+      "options": [
+        "NP-Complete problems are the hardest problems in the NP complexity class, and if any one of them could be solved in polynomial time, it would imply that P=NP, a major open problem in computer science.",
+        "NP-Complete problems can be solved in polynomial time using deterministic Turing machines, but no known efficient algorithms exist to solve them in practice.",
+        "NP-Complete problems are a subclass of NP problems that are guaranteed to have polynomial-time solutions, but the specific algorithms are not yet known.",
+        "NP-Complete problems are a complexity class that lies strictly between P and NP, with properties that are not yet fully understood by researchers."
+      ],
+      "correct_answer": "NP-Complete problems are the hardest problems in the NP complexity class, and if any one of them could be solved in polynomial time, it would imply that P=NP, a major open problem in computer science.",
+      "explanation": "The correct statement accurately captures the key properties of NP-Complete problems:1. NP-Complete problems are the hardest problems in the NP complexity class. This means they are the most difficult problems that can be verified in polynomial time, but no known polynomial-time algorithms exist to solve them.2. If any one NP-Complete problem could be solved in polynomial time, it would imply that P=NP, a major open problem in computer science. This is because all other NP problems could then be reduced to that NP-Complete problem and solved in polynomial time as well.The other options are inaccurate:- NP-Complete problems cannot be solved in polynomial time using deterministic Turing machines (unless P=NP).- NP-Complete problems are not a subclass of NP problems that are guaranteed to have polynomial-time solutions.- NP-Complete problems do not lie strictly between P and NP - they are the hardest problems in NP, and P=NP would imply they are in P.",
+      "complexity_class": "NP-Complete",
+      "difficulty": 4
+    },
+    {
+      "question": "Which of the following statements about NP-Complete problems is most accurate?",
+      "options": [
+        "NP-Complete problems are the hardest problems in NP, and if any one of them could be solved in polynomial time, then P=NP.",
+        "NP-Complete problems can be solved in polynomial time using a non-deterministic Turing machine.",
+        "NP-Complete problems are a subset of NP problems that are not solvable in polynomial time.",
+        "NP-Complete problems are a complexity class that includes all problems that can be verified in polynomial time."
+      ],
+      "correct_answer": "NP-Complete problems are the hardest problems in NP, and if any one of them could be solved in polynomial time, then P=NP.",
+      "explanation": "NP-Complete problems are the most difficult problems within the NP complexity class. They are considered the hardest problems in NP because every other problem in NP can be reduced to an NP-Complete problem in polynomial time. If any NP-Complete problem could be solved in polynomial time, then all NP problems could also be solved in polynomial time, implying that P=NP, which is a major open question in computer science. The other options are either incorrect or do not fully capture the significance of NP-Complete problems.",
+      "complexity_class": "NP-Complete",
+      "difficulty": 4
     }
   ]
 }

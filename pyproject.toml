@@ -38,6 +38,10 @@ dev = [
     "mypy>=0.991",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["game*", "problems*"]
+
 [project.scripts]
 complexity-game = "main:main"
 

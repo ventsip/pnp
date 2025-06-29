@@ -162,3 +162,7 @@ cython_debug/
 #  project, it is recommended to add the gitignore entries as well.
 #  https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 .idea/
+
+# Project specific
+llm_questions_cache.json
+*.json.bak
