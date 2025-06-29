@@ -175,7 +175,25 @@ class ComplexityGame:
         
         user_choice = self.ui.get_llm_answer(len(question.options))
         user_answer = question.options[user_choice]
-        correct = user_answer == question.correct_answer
+        
+        # Check if correct_answer is the full text or just an option number
+        if question.correct_answer in question.options:
+            # correct_answer is the full option text
+            correct = user_answer == question.correct_answer
+        else:
+            # correct_answer might be option number (1, 2, 3, 4) or index (0, 1, 2, 3)
+            try:
+                # Try parsing as 1-based option number
+                correct_index = int(question.correct_answer) - 1
+                if 0 <= correct_index < len(question.options):
+                    correct = user_choice == correct_index
+                else:
+                    # Try parsing as 0-based index
+                    correct_index = int(question.correct_answer)
+                    correct = user_choice == correct_index
+            except (ValueError, IndexError):
+                # Fallback to text comparison
+                correct = user_answer == question.correct_answer
         
         result_choice = self.ui.show_llm_result(correct, question, user_answer)
         

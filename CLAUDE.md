@@ -128,6 +128,12 @@ CLAUDE_MODEL=claude-3-sonnet-20240229
 - Fact-checking prompts improve accuracy
 - Report issues for continuous improvement
 
+### Answer validation issues
+
+- Fixed bug where correct answers were marked as incorrect due to format inconsistencies
+- System now handles both full-text answers and option numbers (1-4 or 0-3)
+- Robust comparison logic ensures accurate scoring
+
 ## Development Notes
 
 ### Adding New Complexity Classes
