@@ -84,6 +84,8 @@ NP-Hard Problems:
         print("=" * 40)
         print(self.complexity_descriptions[complexity_class])
         print()
+        self.show_complexity_relationships()
+        print()
         input("Press Enter to start solving problems...")
     
     def show_problem(self, problem: Problem):
@@ -96,22 +98,25 @@ NP-Hard Problems:
         print(problem.description)
         print()
         
-        if problem.hint:
-            show_hint = input("Would you like a hint? (y/n): ").lower().strip()
-            if show_hint == 'y':
-                print(f"HINT: {problem.hint}")
-                print()
+        self.current_problem_hint = problem.hint if problem.hint else None
     
     def get_decision_answer(self) -> bool:
         """Get yes/no answer from user"""
         while True:
-            answer = input("Your answer (yes/no or y/n): ").lower().strip()
+            hint_text = "/h for hint" if hasattr(self, 'current_problem_hint') and self.current_problem_hint else ""
+            prompt = f"Your answer (yes/no or y/n{'/h' if hint_text else ''}): "
+            answer = input(prompt).lower().strip()
+            
             if answer in ['yes', 'y', 'true', '1']:
                 return True
             elif answer in ['no', 'n', 'false', '0']:
                 return False
+            elif answer == 'h' and hasattr(self, 'current_problem_hint') and self.current_problem_hint:
+                print(f"HINT: {self.current_problem_hint}")
+                print()
             else:
-                print("Please answer yes/no (or y/n)")
+                help_text = "Please answer yes/no (or y/n" + ("/h for hint" if hint_text else "") + ")"
+                print(help_text)
     
     def get_classification_answer(self) -> str:
         """Get complexity class classification from user"""
@@ -122,7 +127,10 @@ NP-Hard Problems:
         print("4. NP-Hard")
         
         while True:
-            choice = input("Enter choice (1-4): ").strip()
+            hint_text = "/h for hint" if hasattr(self, 'current_problem_hint') and self.current_problem_hint else ""
+            prompt = f"Enter choice (1-4{'/h' if hint_text else ''}): "
+            choice = input(prompt).strip()
+            
             if choice == '1':
                 return 'P'
             elif choice == '2':
@@ -131,8 +139,12 @@ NP-Hard Problems:
                 return 'NP-Complete'
             elif choice == '4':
                 return 'NP-Hard'
+            elif choice == 'h' and hasattr(self, 'current_problem_hint') and self.current_problem_hint:
+                print(f"HINT: {self.current_problem_hint}")
+                print()
             else:
-                print("Please enter 1, 2, 3, or 4")
+                help_text = "Please enter 1, 2, 3, or 4" + (" or h for hint" if hint_text else "")
+                print(help_text)
     
     def get_optimization_answer(self) -> Any:
         """Get optimization answer from user"""
@@ -141,19 +153,26 @@ NP-Hard Problems:
         print("2. Enter 'no' if it's not optimal")
         print("3. Or enter the optimal value if you know it")
         
-        answer = input("Your answer: ").strip()
-        
-        # Try to parse as number first
-        try:
-            return float(answer)
-        except ValueError:
-            # Parse as yes/no
-            if answer.lower() in ['yes', 'y', 'true', '1']:
-                return True
-            elif answer.lower() in ['no', 'n', 'false', '0']:
-                return False
-            else:
-                return answer
+        while True:
+            hint_text = " or h for hint" if hasattr(self, 'current_problem_hint') and self.current_problem_hint else ""
+            answer = input(f"Your answer{hint_text}: ").strip()
+            
+            if answer.lower() == 'h' and hasattr(self, 'current_problem_hint') and self.current_problem_hint:
+                print(f"HINT: {self.current_problem_hint}")
+                print()
+                continue
+            
+            # Try to parse as number first
+            try:
+                return float(answer)
+            except ValueError:
+                # Parse as yes/no
+                if answer.lower() in ['yes', 'y', 'true', '1']:
+                    return True
+                elif answer.lower() in ['no', 'n', 'false', '0']:
+                    return False
+                else:
+                    return answer
     
     def show_result(self, correct: bool, explanation: str):
         """Show whether answer was correct and explanation"""
@@ -291,6 +310,100 @@ This game helps you understand the difference between these complexity classes!
         
         print()
         input("Press Enter to continue...")
+    
+    def show_complexity_relationships(self):
+        """Show ASCII visualization of complexity class relationships"""
+        print("COMPLEXITY CLASS RELATIONSHIPS:")
+        print("=" * 50)
+        print("""
+┌─────────────────────────────────────────────────────────┐
+│                       NP-HARD                           │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │                    NP                           │    │
+│  │  ┌─────────────────────────────────────────┐    │    │
+│  │  │                 NP-COMPLETE             │    │    │
+│  │  │  ┌─────────────────────────────────┐    │    │    │
+│  │  │  │               P                 │    │    │    │
+│  │  │  └─────────────────────────────────┘    │    │    │
+│  │  └─────────────────────────────────────────┘    │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+
+ALGORITHMS BY COMPLEXITY CLASS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+P Problems (Efficiently Solvable):
+• Binary Search        O(log n)
+  Problem: Find target in sorted array
+  Type: Search problem
+  
+• Merge Sort           O(n log n)  
+  Problem: Sort array of elements
+  Type: Sorting problem
+  
+• Dijkstra's Algorithm O(V² + E)
+  Problem: Find shortest path in weighted graph
+  Type: Graph optimization problem
+  
+• Matrix Multiplication O(n³)
+  Problem: Multiply two n×n matrices
+  Type: Algebraic computation problem
+
+NP Problems (Solution Verifiable in Polynomial Time):
+• Subset Sum Verification
+  Problem: Given set and sum, verify if subset exists
+  Type: Decision problem (checking solutions)
+  
+• Graph Coloring Verification
+  Problem: Verify if graph can be colored with k colors
+  Type: Graph decision problem
+  
+• Hamiltonian Path Verification
+  Problem: Verify if path visits each vertex exactly once
+  Type: Graph traversal decision problem
+  
+• Boolean Satisfiability (SAT) Verification
+  Problem: Verify if boolean formula can be satisfied
+  Type: Logic decision problem
+
+NP-Complete Problems (Hardest in NP):
+• 3-SAT (Boolean Satisfiability)
+  Problem: Can boolean formula with 3 literals per clause be satisfied?
+  Type: Logic decision problem (first proven NP-Complete)
+  
+• Hamiltonian Path/Cycle
+  Problem: Does path/cycle visiting each vertex once exist?
+  Type: Graph traversal decision problem
+  
+• Traveling Salesman (Decision Version)
+  Problem: Is there tour visiting all cities within cost limit?
+  Type: Graph optimization decision problem
+  
+• Vertex Cover
+  Problem: Can k vertices cover all edges in graph?
+  Type: Graph covering decision problem
+  
+• Knapsack Problem
+  Problem: Can items fit in knapsack with value ≥ target?
+  Type: Combinatorial optimization decision problem
+
+NP-Hard Problems (At Least as Hard as NP-Complete):
+• Traveling Salesman (Optimization)
+  Problem: Find shortest tour visiting all cities
+  Type: Graph optimization problem (not just yes/no)
+  
+• Maximum Clique
+  Problem: Find largest complete subgraph
+  Type: Graph optimization problem
+  
+• Minimum Vertex Cover
+  Problem: Find smallest set of vertices covering all edges
+  Type: Graph optimization problem
+  
+• Halting Problem
+  Problem: Will given program halt on given input?
+  Type: Undecidable problem (not even in NP)
+        """)
     
     def show_goodbye(self):
         """Display goodbye message"""
