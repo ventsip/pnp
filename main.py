@@ -83,6 +83,7 @@ class ComplexityGame:
         """Present a problem to the user and check their solution"""
         self.ui.show_problem(problem)
         
+        correct = False  # Default value in case no branch is taken
         if problem.problem_type == 'decision':
             answer = self.ui.get_decision_answer()
             correct = problem.check_decision(answer)
