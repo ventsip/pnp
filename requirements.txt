@@ -1,0 +1,10 @@
+# Complexity Theory Learning Game Requirements
+# This game uses only Python standard library - no external dependencies required!
+
+# Python 3.7+ is required for:
+# - Type hints (typing module)
+# - f-strings
+# - Dictionaries maintaining insertion order
+
+# No external packages needed!
+# The game is designed to be self-contained and educational.
