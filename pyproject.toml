@@ -25,7 +25,10 @@ classifiers = [
     "Topic :: Education",
     "Topic :: Games/Entertainment :: Puzzle Games",
 ]
-dependencies = []
+dependencies = [
+    "anthropic>=0.28.0",
+    "python-dotenv>=1.0.0",
+]
 
 [project.optional-dependencies]
 dev = [

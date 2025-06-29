@@ -66,16 +66,17 @@ NP-Hard Problems:
         print("-" * 20)
         print("1. Tutorial Mode (Learn each complexity class)")
         print("2. Challenge Mode (Mixed problems with scoring)")
-        print("3. Theory Reference (Educational content)")
-        print("4. View Scores & Statistics")
-        print("5. Quit")
+        print("3. AI Question Mode (LLM-generated questions)")
+        print("4. Theory Reference (Educational content)")
+        print("5. View Scores & Statistics")
+        print("6. Quit")
         print()
         
         while True:
-            choice = input("Enter your choice (1-5): ").strip()
-            if choice in ['1', '2', '3', '4', '5']:
+            choice = input("Enter your choice (1-6): ").strip()
+            if choice in ['1', '2', '3', '4', '5', '6']:
                 return choice
-            print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
+            print("Invalid choice. Please enter 1, 2, 3, 4, 5, or 6.")
     
     def show_complexity_intro(self, complexity_class: str):
         """Show introduction to a complexity class"""
@@ -413,3 +414,102 @@ NP-Hard Problems (At Least as Hard as NP-Complete):
         print()
         print("Remember: P vs NP is still unsolved... maybe you'll solve it someday! 🤔")
         print()
+    
+    def show_llm_question(self, question_data: 'LLMQuestion'):
+        """Display an LLM-generated question"""
+        self.clear_screen()
+        print(f"AI GENERATED QUESTION")
+        print(f"Complexity Class: {question_data.complexity_class}")
+        print(f"Difficulty: {'★' * question_data.difficulty}")
+        print("=" * 50)
+        print(question_data.question)
+        print()
+        
+        for i, option in enumerate(question_data.options, 1):
+            print(f"{i}. {option}")
+        print()
+    
+    def get_llm_answer(self, num_options: int) -> int:
+        """Get answer choice for LLM question"""
+        while True:
+            try:
+                choice = input(f"Enter your choice (1-{num_options}): ").strip()
+                choice_num = int(choice)
+                if 1 <= choice_num <= num_options:
+                    return choice_num - 1  # Return 0-based index
+                else:
+                    print(f"Please enter a number between 1 and {num_options}")
+            except ValueError:
+                print("Please enter a valid number")
+    
+    def show_llm_result(self, correct: bool, question_data: 'LLMQuestion', user_answer: str):
+        """Show result of LLM question"""
+        print()
+        print("=" * 50)
+        if correct:
+            print("✓ CORRECT!")
+        else:
+            print("✗ INCORRECT")
+            print(f"Your answer: {user_answer}")
+            print(f"Correct answer: {question_data.correct_answer}")
+        
+        print()
+        print("EXPLANATION:")
+        print(question_data.explanation)
+        print()
+        
+        # Offer detailed explanation
+        while True:
+            choice = input("Would you like a detailed explanation? (y/n): ").lower().strip()
+            if choice in ['y', 'yes']:
+                return 'detailed'
+            elif choice in ['n', 'no']:
+                return 'continue'
+            else:
+                print("Please answer y or n")
+    
+    def show_detailed_explanation(self, explanation: str):
+        """Show detailed AI-generated explanation"""
+        self.clear_screen()
+        print("DETAILED EXPLANATION")
+        print("=" * 50)
+        print(explanation)
+        print()
+        input("Press Enter to continue...")
+    
+    def show_ai_mode_menu(self):
+        """Show AI question mode menu"""
+        self.clear_screen()
+        print("AI QUESTION MODE")
+        print("=" * 30)
+        print("Generate questions using Claude AI!")
+        print()
+        print("1. P Problems")
+        print("2. NP Problems")
+        print("3. NP-Complete Problems")
+        print("4. NP-Hard Problems")
+        print("5. Mixed Conceptual Questions")
+        print("6. Back to Main Menu")
+        print()
+        
+        while True:
+            choice = input("Enter choice (1-6): ").strip()
+            if choice in ['1', '2', '3', '4', '5', '6']:
+                return choice
+            print("Invalid choice. Please enter 1-6.")
+    
+    def show_ai_unavailable(self):
+        """Show message when AI features are not available"""
+        self.clear_screen()
+        print("AI FEATURES UNAVAILABLE")
+        print("=" * 30)
+        print("AI question generation requires:")
+        print("1. anthropic library installed")
+        print("2. ANTHROPIC_API_KEY environment variable set")
+        print()
+        print("To enable AI features:")
+        print("1. pip install anthropic python-dotenv")
+        print("2. Copy .env.example to .env")
+        print("3. Add your Anthropic API key to .env")
+        print()
+        input("Press Enter to return to main menu...")
