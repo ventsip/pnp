@@ -6,7 +6,6 @@ A game to teach P, NP, NP-complete, and NP-hard problems
 
 import random
 import time
-from typing import List, Dict, Any
 from problems.p_problems import PProblemSet
 from problems.np_problems import NPProblemSet
 from problems.npc_problems import NPCompleteProblemSet
@@ -24,6 +23,14 @@ class ComplexityGame:
             'NP': NPProblemSet(),
             'NP-Complete': NPCompleteProblemSet(),
             'NP-Hard': NPHardProblemSet()
+        }
+        self.complexity_classes = list(self.problem_sets.keys())
+        self.ai_mode_mapping = {
+            '1': 'P',
+            '2': 'NP', 
+            '3': 'NP-Complete',
+            '4': 'NP-Hard',
+            '5': 'Conceptual'
         }
         self.current_level = 1
         self.problems_solved = 0
@@ -65,8 +72,8 @@ class ComplexityGame:
         """Challenge mode - mixed problems with scoring"""
         self.ui.show_challenge_start()
         
-        for round_num in range(5):
-            complexity_class = random.choice(list(self.problem_sets.keys()))
+        for _ in range(5):
+            complexity_class = random.choice(self.complexity_classes)
             problem_set = self.problem_sets[complexity_class]
             problem = problem_set.get_random_problem()
             
@@ -121,53 +128,40 @@ class ComplexityGame:
             if choice == '6':  # Back to main menu
                 break
             
-            # Map choice to complexity class
-            complexity_classes = {
-                '1': 'P',
-                '2': 'NP', 
-                '3': 'NP-Complete',
-                '4': 'NP-Hard',
-                '5': 'Conceptual'
-            }
-            
-            complexity_class = complexity_classes.get(choice)
+            complexity_class = self.ai_mode_mapping.get(choice)
             if not complexity_class:
                 continue
             
             # Generate and ask questions
-            questions_asked = 0
             max_questions = 3
-            max_retries = 2
             
-            while questions_asked < max_questions:
-                retries = 0
-                question = None
-                
-                while retries < max_retries and not question:
-                    try:
-                        if complexity_class == 'Conceptual':
-                            if self.llm_questions.generator:
-                                question = self.llm_questions.generator.generate_conceptual_question("complexity theory")
-                            else:
-                                print("LLM generator not available")
-                                break
-                        else:
-                            difficulty = random.randint(2, 4)  # Medium difficulty range
-                            question = self.llm_questions.get_question(complexity_class, difficulty)
-                    except Exception as e:
-                        print(f"Error generating question: {e}")
-                    
-                    if not question:
-                        retries += 1
-                        if retries < max_retries:
-                            print(f"Retrying question generation... ({retries}/{max_retries})")
-                
+            for _ in range(max_questions):
+                question = self._generate_question_with_retry(complexity_class)
                 if question:
                     self.solve_llm_question(question)
-                    questions_asked += 1
                 else:
                     print("Failed to generate question after retries. Skipping to next question.")
-                    questions_asked += 1  # Still increment to avoid infinite loop
+    
+    def _generate_question_with_retry(self, complexity_class, max_retries=2):
+        """Generate a question with retry logic"""
+        for attempt in range(max_retries):
+            try:
+                if complexity_class == 'Conceptual':
+                    if self.llm_questions.generator:
+                        return self.llm_questions.generator.generate_conceptual_question("complexity theory")
+                    else:
+                        print("LLM generator not available")
+                        return None
+                else:
+                    difficulty = random.randint(2, 4)  # Medium difficulty range
+                    return self.llm_questions.get_question(complexity_class, difficulty)
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    print(f"Failed to generate question: {e}")
+                    return None
+                else:
+                    print(f"Retrying question generation... ({attempt + 1}/{max_retries})")
+        return None
     
     def solve_llm_question(self, question):
         """Present an LLM question to the user"""
