@@ -124,21 +124,7 @@
       "difficulty": 4
     }
   ],
-  "NP_3": [
-    {
-      "question": "Which of the following best describes the computational complexity class NP?",
-      "options": [
-        "NP problems can be solved in polynomial time by a deterministic Turing machine.",
-        "NP problems can be verified in polynomial time, but may not be solvable in polynomial time.",
-        "NP problems are a subset of the P complexity class, meaning all NP problems can be solved efficiently.",
-        "NP problems are a superset of the P complexity class, meaning all P problems are also NP problems."
-      ],
-      "correct_answer": "NP problems can be verified in polynomial time, but may not be solvable in polynomial time.",
-      "explanation": "The key characteristics of NP problems are:1) They can be VERIFIED in polynomial time - given a proposed solution, we can check if it is correct in polynomial time.2) However, it is not known whether they can be SOLVED in polynomial time. This is the famous P vs NP problem - we don't know if P=NP.So NP problems can be quickly checked, but may not be quickly solvable. This distinguishes them from the P complexity class, where problems are both quickly verifiable and quickly solvable.The other options are inaccurate:- NP problems cannot be solved in polynomial time by a deterministic Turing machine (that would imply P=NP).- NP is a superset of P, not a subset. All P problems are also NP problems.- NP is not a superset of P, as the relationship between the two classes is an open problem.",
-      "complexity_class": "NP",
-      "difficulty": 3
-    }
-  ],
+  "NP_3": [],
   "NP-Complete_3": [
     {
       "question": "Which of the following best describes the significance of NP-Complete problems?",
@@ -220,6 +206,88 @@
       "correct_answer": "NP-Complete problems are the hardest problems in NP, and if any one of them could be solved in polynomial time, then P=NP.",
       "explanation": "NP-Complete problems are the most difficult problems within the NP complexity class. They are considered the hardest problems in NP because every other problem in NP can be reduced to an NP-Complete problem in polynomial time. If any NP-Complete problem could be solved in polynomial time, then all NP problems could also be solved in polynomial time, implying that P=NP, which is a major open question in computer science. The other options are either incorrect or do not fully capture the significance of NP-Complete problems.",
       "complexity_class": "NP-Complete",
+      "difficulty": 4
+    }
+  ],
+  "NP_2": [
+    {
+      "question": "Which of the following statements best describes the class of NP problems?",
+      "options": [
+        "NP problems are decision problems that can be verified in polynomial time, but may not be solvable in polynomial time.",
+        "NP problems are decision problems that can be solved in polynomial time.",
+        "NP problems are decision problems that are always solvable in polynomial time.",
+        "NP problems are decision problems that cannot be verified in polynomial time."
+      ],
+      "correct_answer": "NP problems are decision problems that can be verified in polynomial time, but may not be solvable in polynomial time.",
+      "explanation": "NP problems are a class of decision problems where the correctness of a solution can be verified in polynomial time, but the time required to find the solution may not be polynomial. This means that while a solution to an NP problem can be checked quickly, the problem itself may not be solvable in polynomial time.Examples of NP problems include the Traveling Salesman Problem, the Knapsack Problem, and the Graph Coloring Problem. These problems can be verified in polynomial time, but finding the optimal solution may require exponential time.The other options are incorrect:- 'NP problems are decision problems that can be solved in polynomial time' is false, as NP problems may not be solvable in polynomial time.- 'NP problems are decision problems that are always solvable in polynomial time' is false, as NP problems may not be solvable in polynomial time.- 'NP problems are decision problems that cannot be verified in polynomial time' is false, as the defining characteristic of NP problems is that they can be verified in polynomial time.",
+      "complexity_class": "NP",
+      "difficulty": 2
+    },
+    {
+      "question": "Which of the following statements accurately describes the class of NP problems?",
+      "options": [
+        "NP problems are problems that can be verified in polynomial time, but may not be solvable in polynomial time.",
+        "NP problems are problems that can be solved in polynomial time.",
+        "NP problems are a subset of P problems, meaning all NP problems are also P problems.",
+        "NP problems are a superset of P problems, meaning all P problems are also NP problems."
+      ],
+      "correct_answer": "NP problems are problems that can be verified in polynomial time, but may not be solvable in polynomial time.",
+      "explanation": "The key characteristics of NP problems are:1) They can be VERIFIED in polynomial time - given a proposed solution, we can check if it is correct in polynomial time.2) However, it may not be possible to FIND a solution in polynomial time. NP problems may require exponential time to solve.So the first option correctly captures the essence of NP problems, while the other options are not fully accurate. NP is a broader class than P, containing both P problems and NP-complete problems that are not known to be solvable in polynomial time.",
+      "complexity_class": "NP",
+      "difficulty": 2
+    },
+    {
+      "question": "Which of the following statements about NP problems is true?",
+      "options": [
+        "NP problems can be solved in polynomial time",
+        "NP problems cannot be verified in polynomial time",
+        "NP problems include only NP-complete problems",
+        "NP problems can be verified in polynomial time"
+      ],
+      "correct_answer": "NP problems can be verified in polynomial time",
+      "explanation": "NP problems are a complexity class of decision problems where the correctness of a solution can be verified in polynomial time, even if finding the solution itself may not be possible in polynomial time.The key characteristics of NP problems are:- The solution can be verified in polynomial time- The problem may or may not be solvable in polynomial time- NP includes both P problems (solvable in polynomial time) and NP-complete problems (likely not solvable in polynomial time)So the correct statement is that NP problems can be verified in polynomial time, which distinguishes them from problems outside the NP complexity class.",
+      "complexity_class": "NP",
+      "difficulty": 2
+    }
+  ],
+  "NP_4": [
+    {
+      "question": "Which of the following statements accurately describes the relationship between P and NP complexity classes?",
+      "options": [
+        "P and NP are disjoint complexity classes, meaning no problems can be in both P and NP.",
+        "All problems in P are also in NP, but there may be problems in NP that are not in P.",
+        "All problems in NP are also in P, but there may be problems in P that are not in NP.",
+        "P and NP are equivalent complexity classes, meaning all problems in P are also in NP and vice versa."
+      ],
+      "correct_answer": "All problems in P are also in NP, but there may be problems in NP that are not in P.",
+      "explanation": "The relationship between P and NP is that P \u2286 NP, meaning all problems that can be solved in polynomial time (P) are also verifiable in polynomial time (NP), but there may be problems in NP that are not solvable in polynomial time and are therefore not in P. This is the widely believed but unproven conjecture that P \u2260 NP. The other options are incorrect - P and NP are not disjoint, NP does not contain all of P, and P and NP are not equivalent complexity classes.",
+      "complexity_class": "NP",
+      "difficulty": 4
+    },
+    {
+      "question": "Which of the following statements best characterizes the complexity class NP?",
+      "options": [
+        "NP problems can be SOLVED in polynomial time",
+        "NP problems can be VERIFIED in polynomial time",
+        "NP problems are a strict superset of P problems",
+        "NP problems are a strict subset of P problems"
+      ],
+      "correct_answer": "NP problems can be VERIFIED in polynomial time",
+      "explanation": "The defining characteristic of NP problems is that they can be VERIFIED in polynomial time, even if they cannot necessarily be SOLVED in polynomial time. This means that given a candidate solution, we can check in polynomial time whether it is a valid solution to the problem.The other options are incorrect:- 'NP problems can be SOLVED in polynomial time' is false, as the P vs NP problem remains unsolved and it is unknown whether all NP problems can be solved efficiently.- 'NP problems are a strict superset of P problems' is correct, as all P problems are also NP problems, but there may be NP problems that are not in P.- 'NP problems are a strict subset of P problems' is false, as P is a subset of NP (P \u2286 NP).",
+      "complexity_class": "NP",
+      "difficulty": 4
+    },
+    {
+      "question": "Which of the following statements best characterizes the complexity class NP?",
+      "options": [
+        "NP problems can be solved in polynomial time by a deterministic Turing machine.",
+        "NP problems can be verified in polynomial time by a deterministic Turing machine.",
+        "NP problems can be solved in polynomial time by a non-deterministic Turing machine.",
+        "NP problems can be verified in polynomial time by a non-deterministic Turing machine."
+      ],
+      "correct_answer": "NP problems can be verified in polynomial time by a non-deterministic Turing machine.",
+      "explanation": "The defining characteristic of the complexity class NP is that NP problems can be VERIFIED in polynomial time by a non-deterministic Turing machine. This means that if a solution to an NP problem is provided, it can be checked for correctness in polynomial time.However, it is not known whether NP problems can be SOLVED in polynomial time by a deterministic Turing machine. This is the famous P vs NP problem, one of the biggest open questions in computer science.Option A is incorrect because it states that NP problems can be solved in polynomial time, which is the defining characteristic of the P complexity class, not NP.Option B is correct - this accurately describes the defining property of NP problems.Option C is incorrect because it states that NP problems can be solved in polynomial time by a non-deterministic Turing machine, which is the defining characteristic of the NPTIME complexity class, not NP.Option D is incorrect because it conflates the properties of NP and NPTIME - NP problems can be verified in polynomial time by a non-deterministic Turing machine, but NPTIME problems can be solved in polynomial time by a non-deterministic Turing machine.",
+      "complexity_class": "NP",
       "difficulty": 4
     }
   ]
