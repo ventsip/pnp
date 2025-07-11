@@ -164,3 +164,74 @@ The integration uses Anthropic's Claude API with:
 - **Model**: claude-3-haiku-20240307 (configurable)
 
 This ensures educational accuracy while maintaining creativity in question generation.
+
+## Testing
+
+### Running Tests
+
+The project includes a comprehensive test suite covering all major components:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_main.py
+
+# Run tests with coverage
+pytest --cov=game --cov=problems --cov=main
+
+# Run tests in parallel (if pytest-xdist is installed)
+pytest -n auto
+```
+
+### Test Coverage
+
+The test suite includes:
+
+- **Unit Tests**: Individual component testing
+  - `test_main.py`: Core game logic and initialization
+  - `test_problems.py`: Problem generation and validation
+  - `test_scoring.py`: Score calculation and statistics
+  - `test_ui.py`: User interface components
+  - `test_llm_questions.py`: AI question generation and caching
+
+- **Integration Tests**: Component interaction testing
+  - `test_integration.py`: End-to-end game flow testing
+
+### Test Dependencies
+
+Tests require pytest and related packages:
+
+```bash
+# Install test dependencies
+pip install pytest pytest-cov
+
+# Or install all development dependencies
+pip install -e .[dev]
+```
+
+### Running Tests in Development
+
+Before making changes, run the test suite to ensure everything works:
+
+```bash
+# Quick test run
+pytest tests/
+
+# Full test run with coverage
+pytest --cov=. --cov-report=html
+
+# View coverage report
+open htmlcov/index.html
+```
+
+### Test Environment
+
+Tests are designed to work without external dependencies:
+- AI features are mocked when API keys are not available
+- File system operations use temporary directories
+- Network calls are stubbed for reliable testing

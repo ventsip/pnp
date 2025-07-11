@@ -5,8 +5,14 @@ LLM-powered question generation for complexity theory game
 import os
 import json
 import re
-from typing import Dict, Any, Optional, List
+import asyncio
+import threading
+import time
+import gzip
+from typing import Dict, Any, Optional, List, Deque
 from dataclasses import dataclass
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 try:
     import anthropic
@@ -14,6 +20,19 @@ try:
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
+
+try:
+    from .performance_monitor import performance_monitor, PerformanceContext
+except ImportError:
+    # Fallback if performance monitor is not available
+    class PerformanceContext:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+    performance_monitor = None
 
 @dataclass
 class LLMQuestion:
@@ -306,81 +325,247 @@ IMPORTANT: Return ONLY plain text explanation, NOT JSON format. Do not wrap the 
             print(f"Error generating detailed explanation: {e}")
             return None
 
-class LLMQuestionBank:
-    """Manages a bank of LLM-generated questions with caching"""
+class OptimizedLLMQuestionBank:
+    """Optimized question bank with async generation, memory caching, and background prefetching"""
     
-    def __init__(self, cache_file: str = "llm_questions_cache.json"):
+    def __init__(self, cache_file: str = "llm_questions_cache.json", memory_cache_size: int = 50, use_compression: bool = True):
         self.cache_file = cache_file
-        self.cache = self._load_cache()
+        self.use_compression = use_compression
+        self.disk_cache = self._load_cache()
+        self.memory_cache: Dict[str, Deque[LLMQuestion]] = {}
+        self.memory_cache_size = memory_cache_size
         self.generator = None
+        self.background_executor = ThreadPoolExecutor(max_workers=2)
+        self.generation_lock = threading.Lock()
+        self.prefetch_running = False
         
         if LLM_AVAILABLE:
             try:
                 self.generator = LLMQuestionGenerator()
+                self._initialize_memory_cache()
+                self._start_background_prefetch()
             except (ImportError, ValueError) as e:
                 print(f"LLM features disabled: {e}")
     
     def _load_cache(self) -> Dict[str, List[Dict]]:
-        """Load cached questions from file"""
+        """Load cached questions from file with optional compression"""
         if os.path.exists(self.cache_file):
             try:
-                with open(self.cache_file, 'r') as f:
-                    return json.load(f)
+                if self.use_compression and self.cache_file.endswith('.gz'):
+                    with gzip.open(self.cache_file, 'rt', encoding='utf-8') as f:
+                        return json.load(f)
+                else:
+                    with open(self.cache_file, 'r') as f:
+                        return json.load(f)
             except (json.JSONDecodeError, IOError):
                 pass
         return {}
     
     def _save_cache(self):
-        """Save questions to cache file"""
+        """Save questions to cache file with optional compression"""
         try:
-            with open(self.cache_file, 'w') as f:
-                json.dump(self.cache, f, indent=2)
+            if self.use_compression and self.cache_file.endswith('.gz'):
+                with gzip.open(self.cache_file, 'wt', encoding='utf-8') as f:
+                    json.dump(self.disk_cache, f, separators=(',', ':'))
+            else:
+                with open(self.cache_file, 'w') as f:
+                    json.dump(self.disk_cache, f, indent=2)
         except IOError:
             pass
     
-    def get_question(self, complexity_class: str, difficulty: int = 3) -> Optional[LLMQuestion]:
-        """Get a question, generating if needed"""
+    def _initialize_memory_cache(self):
+        """Initialize memory cache with existing questions"""
+        for cache_key, questions in self.disk_cache.items():
+            if questions:
+                self.memory_cache[cache_key] = deque(maxlen=self.memory_cache_size)
+                # Load up to 5 questions into memory cache
+                for question_data in questions[:5]:
+                    try:
+                        question = LLMQuestion(**question_data)
+                        self.memory_cache[cache_key].append(question)
+                    except Exception:
+                        continue
+    
+    def _start_background_prefetch(self):
+        """Start background prefetching for common question types"""
+        if self.prefetch_running:
+            return
+        
+        self.prefetch_running = True
+        common_types = [
+            ('P', 3), ('NP', 3), ('NP-Complete', 3), ('NP-Hard', 3), ('Conceptual', 3)
+        ]
+        
+        for complexity_class, difficulty in common_types:
+            self.background_executor.submit(self._prefetch_questions, complexity_class, difficulty)
+    
+    def _prefetch_questions(self, complexity_class: str, difficulty: int):
+        """Prefetch questions in background thread"""
+        cache_key = f"{complexity_class}_{difficulty}"
+        
+        with self.generation_lock:
+            if cache_key not in self.memory_cache:
+                self.memory_cache[cache_key] = deque(maxlen=self.memory_cache_size)
+            
+            current_count = len(self.memory_cache[cache_key])
+            target_count = min(10, self.memory_cache_size // 2)  # Keep 10 questions ready
+            
+            if current_count < target_count:
+                questions_to_generate = target_count - current_count
+                self._generate_batch_questions(complexity_class, difficulty, questions_to_generate)
+    
+    def _generate_batch_questions(self, complexity_class: str, difficulty: int, count: int):
+        """Generate multiple questions in batch for better efficiency"""
+        cache_key = f"{complexity_class}_{difficulty}"
+        
+        for _ in range(count):
+            try:
+                if complexity_class == 'Conceptual':
+                    if self.generator:
+                        question = self.generator.generate_conceptual_question("complexity theory")
+                else:
+                    question = self.generator.generate_question(complexity_class, difficulty)
+                
+                if question:
+                    self.memory_cache[cache_key].append(question)
+                    
+                    # Also add to disk cache for persistence
+                    if cache_key not in self.disk_cache:
+                        self.disk_cache[cache_key] = []
+                    
+                    question_dict = {
+                        'question': question.question,
+                        'options': question.options,
+                        'correct_answer': question.correct_answer,
+                        'explanation': question.explanation,
+                        'complexity_class': question.complexity_class,
+                        'difficulty': question.difficulty
+                    }
+                    self.disk_cache[cache_key].append(question_dict)
+                    
+                    # Limit disk cache size
+                    if len(self.disk_cache[cache_key]) > 20:
+                        self.disk_cache[cache_key] = self.disk_cache[cache_key][-20:]
+            except Exception as e:
+                print(f"Error generating question in batch: {e}")
+                continue
+        
+        # Save to disk periodically
+        if len(self.disk_cache.get(cache_key, [])) % 5 == 0:
+            self._save_cache()
+
+    def get_question_fast(self, complexity_class: str, difficulty: int = 3) -> Optional[LLMQuestion]:
+        """Get a question with optimized caching - returns immediately if available"""
         if not self.generator:
             return None
         
         cache_key = f"{complexity_class}_{difficulty}"
         
-        # Try to get from cache first
-        if cache_key in self.cache and self.cache[cache_key]:
-            question_data = self.cache[cache_key].pop(0)
-            self._save_cache()
-            return LLMQuestion(**question_data)
-        
-        # Generate new question
-        question = self.generator.generate_question(complexity_class, difficulty)
-        if question:
-            # Cache additional questions for future use
-            self._cache_questions(complexity_class, difficulty, 3)
-        
-        return question
+        with PerformanceContext("get_question_fast", "llm"):
+            # Try memory cache first (fastest)
+            if cache_key in self.memory_cache and self.memory_cache[cache_key]:
+                with PerformanceContext("memory_cache_hit", "cache"):
+                    question = self.memory_cache[cache_key].popleft()
+                    
+                    # Record cache hit
+                    if performance_monitor:
+                        performance_monitor.record_metric("cache_hits", 1, "cache")
+                    
+                    # Trigger background refill if running low
+                    if len(self.memory_cache[cache_key]) < 3:
+                        self.background_executor.submit(self._prefetch_questions, complexity_class, difficulty)
+                    
+                    return question
+            
+            # Fallback to disk cache
+            if cache_key in self.disk_cache and self.disk_cache[cache_key]:
+                with PerformanceContext("disk_cache_hit", "cache"):
+                    question_data = self.disk_cache[cache_key].pop(0)
+                    self._save_cache()
+                    
+                    # Record cache hit
+                    if performance_monitor:
+                        performance_monitor.record_metric("cache_hits", 1, "cache")
+                    
+                    return LLMQuestion(**question_data)
+            
+            # Last resort: generate synchronously (with user feedback)
+            print("🤖 Generating new question...")
+            with PerformanceContext("synchronous_generation", "llm"):
+                question = self._generate_question_with_feedback(complexity_class, difficulty)
+                
+                # Record cache miss
+                if performance_monitor:
+                    performance_monitor.record_metric("cache_misses", 1, "cache")
+                
+                if question:
+                    # Start background generation for future questions
+                    self.background_executor.submit(self._prefetch_questions, complexity_class, difficulty)
+                
+                return question
     
-    def _cache_questions(self, complexity_class: str, difficulty: int, count: int):
-        """Generate and cache multiple questions"""
-        cache_key = f"{complexity_class}_{difficulty}"
-        
-        if cache_key not in self.cache:
-            self.cache[cache_key] = []
-        
-        for _ in range(count):
-            question = self.generator.generate_question(complexity_class, difficulty)
-            if question:
-                question_dict = {
-                    'question': question.question,
-                    'options': question.options,
-                    'correct_answer': question.correct_answer,
-                    'explanation': question.explanation,
-                    'complexity_class': question.complexity_class,
-                    'difficulty': question.difficulty
-                }
-                self.cache[cache_key].append(question_dict)
-        
-        self._save_cache()
+    def _generate_question_with_feedback(self, complexity_class: str, difficulty: int) -> Optional[LLMQuestion]:
+        """Generate question with user feedback"""
+        try:
+            if complexity_class == 'Conceptual':
+                if self.generator:
+                    return self.generator.generate_conceptual_question("complexity theory")
+                else:
+                    return None
+            else:
+                return self.generator.generate_question(complexity_class, difficulty)
+        except Exception as e:
+            print(f"Error generating question: {e}")
+            return None
+    
+    def get_question(self, complexity_class: str, difficulty: int = 3) -> Optional[LLMQuestion]:
+        """Legacy method - redirects to optimized version"""
+        return self.get_question_fast(complexity_class, difficulty)
     
     def is_available(self) -> bool:
         """Check if LLM features are available"""
         return self.generator is not None
+    
+    def _prune_cache(self, max_questions_per_class: int = 100):
+        """Prune old cached questions to reduce memory usage"""
+        with self.generation_lock:
+            for cache_key in list(self.disk_cache.keys()):
+                if len(self.disk_cache[cache_key]) > max_questions_per_class:
+                    # Keep only the most recent questions
+                    self.disk_cache[cache_key] = self.disk_cache[cache_key][-max_questions_per_class:]
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics for monitoring"""
+        memory_cache_count = sum(len(cache) for cache in self.memory_cache.values())
+        disk_cache_count = sum(len(questions) for questions in self.disk_cache.values())
+        
+        return {
+            "memory_cache_size": memory_cache_count,
+            "disk_cache_size": disk_cache_count,
+            "memory_cache_limit": self.memory_cache_size,
+            "compression_enabled": self.use_compression,
+            "cache_categories": list(self.memory_cache.keys())
+        }
+    
+    def shutdown(self):
+        """Clean shutdown of background processes"""
+        self.prefetch_running = False
+        self.background_executor.shutdown(wait=True)
+        self._prune_cache()  # Prune before saving
+        self._save_cache()
+
+class LLMQuestionBank:
+    """Legacy question bank - kept for backward compatibility"""
+    
+    def __init__(self, cache_file: str = "llm_questions_cache.json"):
+        self.optimized_bank = OptimizedLLMQuestionBank(cache_file)
+        self.generator = self.optimized_bank.generator
+    
+    def get_question(self, complexity_class: str, difficulty: int = 3) -> Optional[LLMQuestion]:
+        """Get a question using the optimized bank"""
+        return self.optimized_bank.get_question_fast(complexity_class, difficulty)
+    
+    def is_available(self) -> bool:
+        """Check if LLM features are available"""
+        return self.optimized_bank.is_available()
+    

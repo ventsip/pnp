@@ -3,6 +3,7 @@ import sys
 import os
 from unittest.mock import patch, MagicMock, mock_open
 import json
+from collections import deque
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -83,7 +84,7 @@ class TestLLMQuestionGenerator:
         # Test NP class prompt
         prompt = generator._create_prompt('NP', 3)
         assert 'NP problems' in prompt
-        assert 'verified in polynomial time' in prompt
+        assert 'VERIFIED in polynomial time' in prompt
     
     @patch('game.llm_questions.LLM_AVAILABLE', True)
     @patch('game.llm_questions.load_dotenv')
@@ -103,11 +104,9 @@ class TestLLMQuestionGenerator:
             'question': 'What is P?',
             'options': ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
             'correct_answer': 'Option 1',
-            'explanation': 'P is polynomial time',
-            'complexity_class': 'P',
-            'difficulty': 2
+            'explanation': 'P is polynomial time'
         }
-        assert generator._validate_question(valid_question) is True
+        assert generator._validate_question(valid_question, 'P') is True
         
         # Test invalid question (missing field)
         invalid_question = {
@@ -115,7 +114,7 @@ class TestLLMQuestionGenerator:
             'options': ['Option 1', 'Option 2'],
             'correct_answer': 'Option 1'
         }
-        assert generator._validate_question(invalid_question) is False
+        assert generator._validate_question(invalid_question, 'P') is False
     
     @patch('game.llm_questions.LLM_AVAILABLE', True)
     @patch('game.llm_questions.load_dotenv')
@@ -142,23 +141,28 @@ class TestLLMQuestionGenerator:
 
 
 class TestLLMQuestionBank:
+    @patch('game.llm_questions.load_dotenv')
     @patch('builtins.open', new_callable=mock_open, read_data='{}')
     @patch('os.path.exists', return_value=True)
-    def test_init_existing_cache(self, mock_exists, mock_file):
+    def test_init_existing_cache(self, mock_exists, mock_file, mock_load_dotenv):
         """Test LLMQuestionBank initialization with existing cache"""
         bank = LLMQuestionBank()
         
-        assert bank.cache_file == 'llm_questions_cache.json'
-        assert bank.cache == {}
-        mock_file.assert_called_once()
+        assert hasattr(bank, 'optimized_bank')
+        assert bank.optimized_bank.cache_file == 'llm_questions_cache.json'
+        assert bank.optimized_bank.disk_cache == {}
+        # File should be called to read the cache file
+        mock_file.assert_called()
     
+    @patch('game.llm_questions.load_dotenv')
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.exists', return_value=False)
-    def test_init_no_cache(self, mock_exists, mock_file):
+    def test_init_no_cache(self, mock_exists, mock_file, mock_load_dotenv):
         """Test LLMQuestionBank initialization without cache file"""
         bank = LLMQuestionBank()
         
-        assert bank.cache == {}
+        assert hasattr(bank, 'optimized_bank')
+        assert bank.optimized_bank.disk_cache == {}
         mock_file.assert_not_called()
     
     @patch('builtins.open', new_callable=mock_open, read_data='invalid json')
@@ -167,7 +171,8 @@ class TestLLMQuestionBank:
         """Test LLMQuestionBank initialization with invalid cache file"""
         bank = LLMQuestionBank()
         
-        assert bank.cache == {}
+        assert hasattr(bank, 'optimized_bank')
+        assert bank.optimized_bank.disk_cache == {}
     
     @patch('game.llm_questions.LLM_AVAILABLE', True)
     @patch('game.llm_questions.LLMQuestionGenerator')
@@ -187,22 +192,26 @@ class TestLLMQuestionBank:
         assert bank.is_available() is False
         assert bank.generator is None
     
+    @patch('game.llm_questions.load_dotenv')
     @patch('builtins.open', new_callable=mock_open, read_data='{"P_2": [{"question": "test"}]}')
     @patch('os.path.exists', return_value=True)
-    def test_get_question_from_cache(self, mock_exists, mock_file):
+    def test_get_question_from_cache(self, mock_exists, mock_file, mock_load_dotenv):
         """Test getting question from cache"""
         bank = LLMQuestionBank()
         
+        # Mock the generator to simulate LLM features being available
+        bank.optimized_bank.generator = MagicMock()
+        
         # Mock the cache to have a question
-        bank.cache = {
-            'P_2': [LLMQuestion(
+        bank.optimized_bank.memory_cache = {
+            'P_2': deque([LLMQuestion(
                 question="What is P?",
                 options=["Option 1", "Option 2", "Option 3", "Option 4"],
                 correct_answer="Option 1",
                 explanation="P is polynomial time",
                 complexity_class="P",
                 difficulty=2
-            )]
+            )])
         }
         
         question = bank.get_question('P', 2)
@@ -219,14 +228,15 @@ class TestLLMQuestionBank:
         question = bank.get_question('P', 2)
         assert question is None
     
+    @patch('game.llm_questions.load_dotenv')
     @patch('builtins.open', new_callable=mock_open)
     @patch('os.path.exists', return_value=False)
-    def test_save_cache(self, mock_exists, mock_file):
+    def test_save_cache(self, mock_exists, mock_file, mock_load_dotenv):
         """Test saving cache to file"""
         bank = LLMQuestionBank()
-        bank.cache = {'test': 'data'}
+        bank.optimized_bank.disk_cache = {'test': 'data'}
         
-        bank._save_cache()
+        bank.optimized_bank._save_cache()
         
         mock_file.assert_called_with('llm_questions_cache.json', 'w')
         handle = mock_file()

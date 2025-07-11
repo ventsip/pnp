@@ -3,6 +3,9 @@ User Interface for the complexity theory game
 """
 
 import os
+import sys
+import time
+import threading
 from typing import Dict, Any
 from problems.base import Problem
 
@@ -299,14 +302,17 @@ This game helps you understand the difference between these complexity classes!
         
         print("Performance by Complexity Class:")
         print("-" * 30)
-        for complexity_class, class_stats in stats['complexity_stats'].items():
-            attempted = class_stats['attempted']
-            solved = class_stats['solved']
-            accuracy = (solved / attempted * 100) if attempted > 0 else 0
-            print(f"{complexity_class}: {solved}/{attempted} ({accuracy:.1f}%)")
+        if 'complexity_stats' in stats:
+            for complexity_class, class_stats in stats['complexity_stats'].items():
+                attempted = class_stats['attempted']
+                solved = class_stats['solved']
+                accuracy = (solved / attempted * 100) if attempted > 0 else 0
+                print(f"{complexity_class}: {solved}/{attempted} ({accuracy:.1f}%)")
+        else:
+            print("No complexity class statistics available")
         
         print()
-        if stats['score_history']:
+        if 'score_history' in stats and stats['score_history']:
             print(f"Average Score per Problem: {stats['average_score']:.0f}")
         
         print()
@@ -430,17 +436,24 @@ NP-Hard Problems (At Least as Hard as NP-Complete):
         print()
     
     def get_llm_answer(self, num_options: int) -> int:
-        """Get answer choice for LLM question"""
+        """Get answer choice for LLM question with improved UX"""
         while True:
             try:
-                choice = input(f"Enter your choice (1-{num_options}): ").strip()
+                choice = input(f"Enter your choice (1-{num_options}) or 'q' to quit: ").strip().lower()
+                
+                if choice == 'q' or choice == 'quit':
+                    return -1  # Signal to quit
+                
                 choice_num = int(choice)
                 if 1 <= choice_num <= num_options:
                     return choice_num - 1  # Return 0-based index
                 else:
                     print(f"Please enter a number between 1 and {num_options}")
             except ValueError:
-                print("Please enter a valid number")
+                print("Please enter a valid number or 'q' to quit")
+            except KeyboardInterrupt:
+                print("\n👋 Goodbye!")
+                return -1
     
     def show_llm_result(self, correct: bool, question_data: 'LLMQuestion', user_answer: str):
         """Show result of LLM question"""
@@ -513,3 +526,61 @@ NP-Hard Problems (At Least as Hard as NP-Complete):
         print("3. Add your Anthropic API key to .env")
         print()
         input("Press Enter to return to main menu...")
+    
+    def show_loading_spinner(self, message: str = "Loading", duration: float = 2.0):
+        """Show an animated loading spinner"""
+        spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        start_time = time.time()
+        i = 0
+        
+        while time.time() - start_time < duration:
+            sys.stdout.write(f'\r{spinner_chars[i % len(spinner_chars)]} {message}...')
+            sys.stdout.flush()
+            time.sleep(0.1)
+            i += 1
+        
+        sys.stdout.write('\r' + ' ' * (len(message) + 10) + '\r')
+        sys.stdout.flush()
+    
+    def show_generating_question(self, complexity_class: str = ""):
+        """Show question generation progress"""
+        if complexity_class:
+            message = f"🤖 Generating {complexity_class} question"
+        else:
+            message = "🤖 Generating question"
+        
+        print(message + "...")
+        self.show_loading_spinner("Thinking", 1.5)
+    
+    def show_background_generation_status(self, active: bool = True):
+        """Show background generation status"""
+        if active:
+            print("📚 Background question generation active")
+        else:
+            print("📚 Background question generation paused")
+    
+    def show_cache_status(self, cached_count: int, total_requested: int):
+        """Show cache performance info"""
+        cache_hit_rate = (cached_count / total_requested * 100) if total_requested > 0 else 0
+        print(f"📊 Cache performance: {cached_count}/{total_requested} ({cache_hit_rate:.1f}% hit rate)")
+    
+    def get_answer_with_timeout(self, prompt: str, timeout: float = 30.0) -> str:
+        """Get user input with timeout capability"""
+        result = [None]
+        
+        def get_input():
+            try:
+                result[0] = input(prompt)
+            except (EOFError, KeyboardInterrupt):
+                result[0] = "quit"
+        
+        thread = threading.Thread(target=get_input)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout)
+        
+        if thread.is_alive():
+            print("\n⏰ Input timed out. Using default value.")
+            return "quit"
+        
+        return result[0] if result[0] is not None else "quit"

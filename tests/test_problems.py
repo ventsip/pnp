@@ -135,12 +135,14 @@ class TestPProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "array" in instance
-        assert "is_sorted" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'numbers')
+        assert hasattr(problem, 'is_sorted')
+        assert isinstance(problem.numbers, list)
+        assert isinstance(problem.is_sorted, bool)
         
         # Test decision checking
-        result = problem.check_decision(instance["is_sorted"])
+        result = problem.check_decision(problem.is_sorted)
         assert isinstance(result, bool)
     
     def test_search_problem(self):
@@ -151,10 +153,17 @@ class TestPProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "array" in instance
-        assert "target" in instance
-        assert "found" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'numbers')
+        assert hasattr(problem, 'target')
+        assert hasattr(problem, 'exists')
+        assert isinstance(problem.numbers, list)
+        assert isinstance(problem.target, int)
+        assert isinstance(problem.exists, bool)
+        
+        # Test decision checking
+        result = problem.check_decision(problem.exists)
+        assert isinstance(result, bool)
 
 
 class TestNPProblemSet:
@@ -174,10 +183,19 @@ class TestNPProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "numbers" in instance
-        assert "target" in instance
-        assert "proposed_subset" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'numbers')
+        assert hasattr(problem, 'target')
+        assert hasattr(problem, 'proposed_subset')
+        assert hasattr(problem, 'is_valid')
+        assert isinstance(problem.numbers, list)
+        assert isinstance(problem.target, int)
+        assert isinstance(problem.proposed_subset, list)
+        assert isinstance(problem.is_valid, bool)
+        
+        # Test decision checking
+        result = problem.check_decision(problem.is_valid)
+        assert isinstance(result, bool)
     
     def test_hamiltonian_path_verification_problem(self):
         """Test HamiltonianPathVerificationProblem"""
@@ -187,9 +205,19 @@ class TestNPProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "graph" in instance
-        assert "proposed_path" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'vertices')
+        assert hasattr(problem, 'edges')
+        assert hasattr(problem, 'proposed_path')
+        assert hasattr(problem, 'is_valid')
+        assert isinstance(problem.vertices, list)
+        assert isinstance(problem.edges, list)
+        assert isinstance(problem.proposed_path, list)
+        assert isinstance(problem.is_valid, bool)
+        
+        # Test decision checking
+        result = problem.check_decision(problem.is_valid)
+        assert isinstance(result, bool)
 
 
 class TestNPCompleteProblemSet:
@@ -209,9 +237,17 @@ class TestNPCompleteProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "formula" in instance
-        assert "satisfiable" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'formula')
+        assert hasattr(problem, 'variables')
+        assert hasattr(problem, 'is_satisfiable')
+        assert isinstance(problem.formula, str)
+        assert isinstance(problem.variables, list)
+        assert isinstance(problem.is_satisfiable, bool)
+        
+        # Test decision checking
+        result = problem.check_decision(problem.is_satisfiable)
+        assert isinstance(result, bool)
     
     def test_hamiltonian_path_decision_problem(self):
         """Test HamiltonianPathDecisionProblem"""
@@ -221,9 +257,17 @@ class TestNPCompleteProblemSet:
         assert problem.problem_type == "decision"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "graph" in instance
-        assert "has_path" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'vertices')
+        assert hasattr(problem, 'edges')
+        assert hasattr(problem, 'has_hamiltonian_path')
+        assert isinstance(problem.vertices, list)
+        assert isinstance(problem.edges, list)
+        assert isinstance(problem.has_hamiltonian_path, bool)
+        
+        # Test decision checking
+        result = problem.check_decision(problem.has_hamiltonian_path)
+        assert isinstance(result, bool)
 
 
 class TestNPHardProblemSet:
@@ -243,10 +287,17 @@ class TestNPHardProblemSet:
         assert problem.problem_type == "optimization"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "cities" in instance
-        assert "distances" in instance
-        assert "optimal_cost" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'cities')
+        assert hasattr(problem, 'distances')
+        assert hasattr(problem, 'optimal_cost')
+        assert hasattr(problem, 'proposed_tour')
+        assert hasattr(problem, 'proposed_cost')
+        assert isinstance(problem.cities, list)
+        assert isinstance(problem.distances, dict)
+        assert isinstance(problem.optimal_cost, int)
+        assert isinstance(problem.proposed_tour, list)
+        assert isinstance(problem.proposed_cost, int)
     
     def test_max_clique_problem(self):
         """Test MaxCliqueProblem"""
@@ -256,6 +307,16 @@ class TestNPHardProblemSet:
         assert problem.problem_type == "optimization"
         
         # Test instance generation
-        instance = problem.generate_instance()
-        assert "graph" in instance
-        assert "max_clique_size" in instance
+        problem.generate_instance()
+        assert hasattr(problem, 'vertices')
+        assert hasattr(problem, 'edges')
+        assert hasattr(problem, 'max_clique_size')
+        assert hasattr(problem, 'proposed_clique')
+        assert isinstance(problem.vertices, list)
+        assert isinstance(problem.edges, list)
+        assert isinstance(problem.max_clique_size, int)
+        assert isinstance(problem.proposed_clique, list)
+        
+        # Test decision checking
+        result = problem.check_decision(len(problem.proposed_clique) == problem.max_clique_size)
+        assert isinstance(result, bool)

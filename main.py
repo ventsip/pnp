@@ -12,7 +12,7 @@ from problems.npc_problems import NPCompleteProblemSet
 from problems.nph_problems import NPHardProblemSet
 from game.scoring import ScoreManager
 from game.ui import GameUI
-from game.llm_questions import LLMQuestionBank
+from game.llm_questions import LLMQuestionBank, OptimizedLLMQuestionBank
 
 class ComplexityGame:
     def __init__(self):
@@ -24,6 +24,10 @@ class ComplexityGame:
             'NP-Complete': NPCompleteProblemSet(),
             'NP-Hard': NPHardProblemSet()
         }
+        # Start preloading problem sets in background
+        for problem_set in self.problem_sets.values():
+            if hasattr(problem_set, 'start_preloading'):
+                problem_set.start_preloading()
         self.complexity_classes = list(self.problem_sets.keys())
         self.ai_mode_mapping = {
             '1': 'P',
@@ -34,7 +38,14 @@ class ComplexityGame:
         }
         self.current_level = 1
         self.problems_solved = 0
-        self.llm_questions = LLMQuestionBank()
+        # Use optimized LLM question bank with compression
+        self.llm_questions = OptimizedLLMQuestionBank(
+            cache_file="llm_questions_cache.json.gz",
+            use_compression=True
+        )
+        # Track performance stats
+        self.questions_from_cache = 0
+        self.total_questions_requested = 0
         
     def start_game(self):
         """Main game loop"""
@@ -56,6 +67,12 @@ class ComplexityGame:
             elif choice == '6':
                 break
                 
+        # Clean shutdown of background processes
+        if hasattr(self.llm_questions, 'shutdown'):
+            self.llm_questions.shutdown()
+        for problem_set in self.problem_sets.values():
+            if hasattr(problem_set, 'shutdown'):
+                problem_set.shutdown()
         self.ui.show_goodbye()
     
     def play_tutorial(self):
@@ -117,10 +134,14 @@ class ComplexityGame:
         self.ui.show_scores(self.score_manager.get_stats())
     
     def play_ai_mode(self):
-        """AI-powered question mode"""
+        """AI-powered question mode with performance optimizations"""
         if not self.llm_questions.is_available():
             self.ui.show_ai_unavailable()
             return
+        
+        # Show background generation status
+        if hasattr(self.llm_questions, 'prefetch_running'):
+            self.ui.show_background_generation_status(self.llm_questions.prefetch_running)
         
         while True:
             choice = self.ui.show_ai_mode_menu()
@@ -134,40 +155,79 @@ class ComplexityGame:
             
             # Generate and ask questions
             max_questions = 3
+            questions_completed = 0
             
-            for _ in range(max_questions):
+            for i in range(max_questions):
+                print(f"\n=== Question {i+1} of {max_questions} ===")
                 question = self._generate_question_with_retry(complexity_class)
                 if question:
                     self.solve_llm_question(question)
+                    questions_completed += 1
                 else:
                     print("Failed to generate question after retries. Skipping to next question.")
+                    
+                # Brief pause between questions
+                if i < max_questions - 1:
+                    time.sleep(0.5)
+            
+            print(f"\n🎉 Completed {questions_completed} out of {max_questions} questions!")
+            
+            # Show performance summary
+            if self.total_questions_requested > 0:
+                self.ui.show_cache_status(self.questions_from_cache, self.total_questions_requested)
+                
+                # Show detailed cache statistics if available
+                if hasattr(self.llm_questions, 'get_cache_stats'):
+                    stats = self.llm_questions.get_cache_stats()
+                    print(f"\n📊 Cache Details:")
+                    print(f"   Memory: {stats['memory_cache_size']}/{stats['memory_cache_limit']} questions")
+                    print(f"   Disk: {stats['disk_cache_size']} questions")
+                    print(f"   Compression: {'✓' if stats['compression_enabled'] else '✗'}")
     
     def _generate_question_with_retry(self, complexity_class, max_retries=2):
-        """Generate a question with retry logic"""
+        """Generate a question with optimized retry logic and user feedback"""
+        self.total_questions_requested += 1
+        
+        # Show loading indicator for better UX
+        self.ui.show_generating_question(complexity_class)
+        
         for attempt in range(max_retries):
             try:
                 if complexity_class == 'Conceptual':
                     if self.llm_questions.generator:
-                        return self.llm_questions.generator.generate_conceptual_question("complexity theory")
+                        question = self.llm_questions.generator.generate_conceptual_question("complexity theory")
+                        if question:
+                            self.questions_from_cache += 1
+                        return question
                     else:
                         print("LLM generator not available")
                         return None
                 else:
                     difficulty = random.randint(2, 4)  # Medium difficulty range
-                    return self.llm_questions.get_question(complexity_class, difficulty)
+                    question = self.llm_questions.get_question_fast(complexity_class, difficulty)
+                    if question:
+                        self.questions_from_cache += 1
+                    return question
             except Exception as e:
                 if attempt == max_retries - 1:
                     print(f"Failed to generate question: {e}")
                     return None
                 else:
                     print(f"Retrying question generation... ({attempt + 1}/{max_retries})")
+                    time.sleep(1)  # Brief pause before retry
         return None
     
     def solve_llm_question(self, question):
-        """Present an LLM question to the user"""
+        """Present an LLM question to the user with improved error handling"""
         self.ui.show_llm_question(question)
         
         user_choice = self.ui.get_llm_answer(len(question.options))
+        
+        # Handle quit signal
+        if user_choice == -1:
+            print("\n👋 Returning to main menu...")
+            return
+        
         user_answer = question.options[user_choice]
         
         # Check if correct_answer is the full text or just an option number
@@ -198,12 +258,14 @@ class ComplexityGame:
             self.problems_solved += 1
     
     def show_detailed_explanation(self, question, user_answer):
-        """Generate and show detailed explanation for LLM question"""
+        """Generate and show detailed explanation for LLM question with better UX"""
         if not self.llm_questions.generator:
             print("Detailed explanations not available (no LLM generator)")
             return
         
-        print("Generating detailed explanation...")
+        # Show loading indicator
+        self.ui.show_loading_spinner("Generating detailed explanation", 2.0)
+        
         detailed_explanation = self.llm_questions.generator.generate_detailed_explanation(question, user_answer)
         
         if detailed_explanation:
@@ -211,7 +273,26 @@ class ComplexityGame:
         else:
             print("Failed to generate detailed explanation. Please try again later.")
             input("Press Enter to continue...")
+        
+        # Show performance stats if in debug mode
+        if self.total_questions_requested > 0:
+            self.ui.show_cache_status(self.questions_from_cache, self.total_questions_requested)
 
 if __name__ == "__main__":
-    game = ComplexityGame()
-    game.start_game()
+    try:
+        game = ComplexityGame()
+        game.start_game()
+    except KeyboardInterrupt:
+        print("\n👋 Goodbye!")
+    except Exception as e:
+        print(f"\n⚠️ An error occurred: {e}")
+        print("Please report this issue if it persists.")
+    finally:
+        # Ensure proper cleanup
+        if 'game' in locals():
+            if hasattr(game, 'llm_questions') and hasattr(game.llm_questions, 'shutdown'):
+                game.llm_questions.shutdown()
+            if hasattr(game, 'problem_sets'):
+                for problem_set in game.problem_sets.values():
+                    if hasattr(problem_set, 'shutdown'):
+                        problem_set.shutdown()
